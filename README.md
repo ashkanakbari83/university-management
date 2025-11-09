@@ -1,3 +1,5 @@
+# University-Management Architecture
+
 ```mermaid
 ---
 config:
@@ -56,3 +58,4 @@ flowchart TB
 
 
 ````
+
