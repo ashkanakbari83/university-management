@@ -33,9 +33,9 @@ flowchart TB
         BookingService["📅 Booking Service<br>Port 8084<br><br>Reservations<br>Overbooking prevention<br>[FR-04, NFR-R02]"]
   end
  subgraph BusinessServices["Business Microservices"]
-        MarketplaceService["🛒 Marketplace Service<br>Port 8085<br><br>Products &amp; Orders<br>🔥 SAGA PATTERN<br>[FR-05, FR-06]"]
+        MarketplaceService["🛒 Marketplace Service<br>Port 8085<br><br>Products &amp; Orders<br>SAGA PATTERN<br>[FR-05, FR-06]"]
         PaymentService["💰 Payment Service<br>Port 8086<br><br>Payment processing<br>Saga participant<br>Strategy Pattern"]
-        ExamService["📝 Exam Service<br>Port 8087<br><br>Exams &amp; Submissions<br>🔥 CIRCUIT BREAKER<br>[FR-07, FR-08]"]
+        ExamService["📝 Exam Service<br>Port 8087<br><br>Exams &amp; Submissions<br>CIRCUIT BREAKER<br>[FR-07, FR-08]"]
   end
  subgraph SupportServices["Support Microservices"]
         NotificationService["📬 Notification Service<br>Port 8088<br><br>Email &amp; SMS<br>Circuit Breaker target<br>Observer Pattern"]
@@ -78,6 +78,7 @@ flowchart TB
 
 
 ````
+
 
 
 
