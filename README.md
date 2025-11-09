@@ -1,5 +1,13 @@
 # University-Management Architecture
 
+### Communication Patterns:
+
+##### synchronous: API gateway --> gRPC
+##### Asynchronous: RabbitMQ
+##### Caching: Redis
+
+
+
 ```mermaid
 ---
 config:
@@ -58,4 +66,5 @@ flowchart TB
 
 
 ````
+
 
