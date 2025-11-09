@@ -1,12 +1,14 @@
 # University-Management Architecture
 
-### Communication Patterns:
+## Multi-Tenancy
+- ### PostgreSQL: Schema-per-tenant (database level isolation)
 
-##### synchronous: API gateway --> gRPC
-##### ssynchronous: RabbitMQ
-##### caching: Redis
+## Communication Patterns:
+- ### synchronous: API gateway --> gRPC
+- ### ssynchronous: RabbitMQ
+- ### caching: Redis
 
-
+-------------------------------------------------------------------------------------
 ## Level 2 C4 diagram
 ```mermaid
 ---
@@ -66,6 +68,7 @@ flowchart TB
 
 
 ````
+
 
 
 
