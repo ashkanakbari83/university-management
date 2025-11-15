@@ -15,11 +15,12 @@ public class User implements UserDetails {
     private Long id;
     private String username;
     private String password;
-    private final Role role = Role.student; // e.g., "USER" or "ADMIN"
+    private Role role;
 
     // Getters/Setters...
     public void setUsername(String username) { this.username = username; }
     public void setPassword(String password) { this.password = password; }
+    public void setRole(Role role) { this.role = role; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
