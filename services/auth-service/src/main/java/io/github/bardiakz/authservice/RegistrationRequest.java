@@ -1,4 +1,4 @@
 package io.github.bardiakz.authservice;
 
-public record RegistrationRequest(String username, String password, String role) {
+public record RegistrationRequest(String username, String password, Role role) {
 }

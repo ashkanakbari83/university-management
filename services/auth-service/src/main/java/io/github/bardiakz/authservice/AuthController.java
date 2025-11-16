@@ -13,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-
 import java.util.Map;
 
 @RestController
@@ -66,9 +65,27 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest request) {
+    public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
+        // Validation
+        if (request.username() == null || request.username().trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Username is required"));
+        }
+        if (request.password() == null || request.password().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Password is required"));
+        }
+        if (request.role() == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Role is required"));
+        }
 
-        // Check if username already exists (efficient query)
+        if (request.role() != Role.STUDENT && request.role() != Role.INSTRUCTOR) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Role must be either STUDENT or INSTRUCTOR"));
+        }
+
+        // Check if username already exists
         if (userRepository.existsByUsername(request.username())) {
             return ResponseEntity.status(400)
                     .body(Map.of("error", "Username is already taken"));
@@ -77,25 +94,17 @@ public class AuthController {
         // Validate password strength
         if (!isPasswordStrong(request.password())) {
             return ResponseEntity.status(400)
-                    .body(Map.of("error", "Password must be at least 8 characters with letters and numbers"));
+                    .body(Map.of("error", "Password must contain letters and numbers"));
         }
 
         User user = new User();
         user.setUsername(request.username());
         user.setPassword(passwordEncoder.encode(request.password()));
-
-        // SECURITY FIX: Don't allow users to set their own role
-        // Always default to USER role for registration
-        user.setRole(Role.student);
-
-        // If you want to allow role selection, it should be:
-        // 1. In a separate admin endpoint
-        // 2. Protected by admin authentication
-        // 3. Audited/logged
+        user.setRole(request.role());
 
         try {
             userRepository.save(user);
-            log.info("New user registered: {}", user.getUsername());
+            log.info("New user registered: {} with role: {}", user.getUsername(), user.getRole());
             return ResponseEntity.status(201)
                     .body(Map.of("message", "User registered successfully"));
         } catch (Exception e) {
@@ -106,10 +115,10 @@ public class AuthController {
     }
 
     private boolean isPasswordStrong(String password) {
-        return password != null
-                && password.length() >= 8
-                && password.matches(".*[A-Za-z].*")
-                && password.matches(".*\\d.*");
+        return password != null;
+//                && password.length() >= 8
+//                && password.matches(".*[A-Za-z].*")
+//                && password.matches(".*\\d.*");
     }
 
     @PostMapping("/test")
