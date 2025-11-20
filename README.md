@@ -23,16 +23,16 @@
 
 | Service | Port | Language/Framework | Database | Description |
 |---------|------|-------------------|----------|-------------|
-| API Gateway | 8080 | java/Spring Cloud Gateway | - | Entry point, routing, JWT validation |
-| Auth Service | 8081 | java/Spring Boot | PostgreSQL | User authentication, JWT generation |
-| User Service | 8082 | java/Spring Boot | PostgreSQL | User profiles, RBAC |
-| Resource Service | 8083 | java/Spring Boot | PostgreSQL | Resource catalog, availability |
-| Booking Service | 8084 | java/Spring Boot | PostgreSQL | Reservations, overbooking prevention |
-| Marketplace Service | 8085 | java/Spring Boot | PostgreSQL | Products, orders, Saga orchestration |
-| Exam Service | 8087 | java/Spring Boot | PostgreSQL | Exams, submissions, Circuit Breaker |
-| Notification Service | 8088 | java/Spring Boot | PostgreSQL | Email/SMS, Observer pattern |
-| IoT Service | 8089 | java/Spring Boot | - | Sensor data processing |
-| Tracking Service | 8090 | java/Spring Boot | PostgreSQL | Shuttle GPS tracking |
+| API Gateway | 8080 | java25/Spring Cloud Gateway | - | Entry point, routing, JWT validation |
+| Auth Service | 8081 | java25/Spring Boot | PostgreSQL | User authentication, JWT generation |
+| User Service | 8082 | java25/Spring Boot | PostgreSQL | User profiles, RBAC |
+| Resource Service | 8083 | java25/Spring Boot | PostgreSQL | Resource catalog, availability |
+| Booking Service | 8084 | java25/Spring Boot | PostgreSQL | Reservations, overbooking prevention |
+| Marketplace Service | 8085 | java25/Spring Boot | PostgreSQL | Products, orders, Saga orchestration |
+| Exam Service | 8087 | java25/Spring Boot | PostgreSQL | Exams, submissions, Circuit Breaker |
+| Notification Service | 8088 | java25/Spring Boot | PostgreSQL | Email/SMS, Observer pattern |
+| IoT Service | 8089 | java25/Spring Boot | - | Sensor data processing |
+| Tracking Service | 8090 | java25/Spring Boot | PostgreSQL | Shuttle GPS tracking |
 
 -------------------------------------------------------------------------------------
 ## Level 2 C4 diagram
@@ -65,7 +65,7 @@ flowchart TB
   end
     WebApp["🌐 Web App<br>----<br>student/instructor"] -- HTTPS/REST<br>JSON --> APIGateway["🚪 API Gateway<br>Spring Cloud Gateway<br>Port 8080<br><br>• Request routing<br>• JWT validation<br>• Rate limiting<br>• Load balancing"]
     APIGateway -- "<span style=padding-left:>HTTP/REST</span>" --> AuthService & ResourceService & BookingService & TrackingService & MarketplaceService & ExamService
-    APIGateway -- gRPC --> UserService
+    APIGateway -- HTTP/REST --> UserService
     APIGateway -- "<span style=padding-left: 8px; padding-right: 8px; text-align: center; justify-content: center;>HTTP/REST</span>" --> IoTService
     AuthService -- JDBC --> PostgreSQL
     UserService -- JDBC --> PostgreSQL
@@ -95,6 +95,7 @@ flowchart TB
     style MessageBroker fill:#ff6b6b,stroke:#cc5555,stroke-width:3px,color:#ffffff
 
 ````
+
 
 
 
