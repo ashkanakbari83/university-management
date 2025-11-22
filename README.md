@@ -51,7 +51,7 @@ A loosely coupled, event-driven microservices architecture implementing Saga pat
 
 ---
 
-## Level 2 C4 diagram
+## architecture diagram
 
 ```mermaid
 ---
@@ -130,6 +130,168 @@ flowchart TB
     style APIGateway fill:#1168bd,stroke:#0b4884,stroke-width:3px,color:#ffffff
     style MessageBroker fill:#ff6b6b,stroke:#cc5555,stroke-width:3px,color:#ffffff
 ```
+## Level 3 C4 diagram
+```mermaid
+  ---
+config:
+  theme: dark
+---
+flowchart TB
+    Gateway["🚪 API Gateway"]
+    MQ["🐰 RabbitMQ"]
+    DB[("🗄️ Marketplace DB<br/>PostgreSQL")]
+    PaymentSvc["💰 Payment Service"]
+
+    subgraph Marketplace["Marketplace Service"]
+        
+        Controller["📡 REST Controller<br/><br/>Handles HTTP requests<br/>Product & Order endpoints"]
+        
+        ProductMgmt["📦 Product Component<br/><br/>Product catalog<br/>Inventory management"]
+        
+        OrderMgmt["🛒 Order Component<br/><br/>Order lifecycle<br/>Validation"]
+        
+        SagaOrch["⚙️ Saga Orchestrator<br/><br/>Coordinates distributed<br/>transactions across services"]
+        
+        EventPub["📤 Event Publisher<br/><br/>Publishes domain events<br/>to message broker"]
+        
+        EventSub["📥 Event Subscriber<br/><br/>Handles incoming events<br/>Saga step responses"]
+        
+        Repo["💾 Repository Layer<br/><br/>Data access<br/>JPA/Hibernate"]
+    end
+
+    Gateway -->|"REST"| Controller
+    Controller --> ProductMgmt
+    Controller --> OrderMgmt
+    OrderMgmt --> SagaOrch
+    SagaOrch --> EventPub
+    EventPub -->|"Publish"| MQ
+    MQ -->|"Subscribe"| EventSub
+    EventSub --> SagaOrch
+    ProductMgmt --> Repo
+    OrderMgmt --> Repo
+    Repo -->|"JDBC"| DB
+    MQ <-->|"Saga events"| PaymentSvc
+
+    style SagaOrch fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+    style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+    style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style PaymentSvc fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+```
+## Level 2 C4 diagram
+```mermaid
+  ---
+config:
+  theme: dark
+---
+flowchart TB
+    User["👤 User<br/>(Student/Instructor/Admin)"]
+
+    subgraph boundary["University Management System"]
+        
+        WebApp["🌐 Web Application<br/><br/>Single Page Application<br/>User interface"]
+        
+        Gateway["🚪 API Gateway<br/><br/>Spring Cloud Gateway<br/>Routing, auth validation,<br/>rate limiting"]
+        
+        subgraph Services["Microservices"]
+            Auth["🔐 Auth Service<br/><br/>JWT authentication<br/>User credentials"]
+            UserSvc["👤 User Service<br/><br/>Profiles & RBAC"]
+            Resource["📚 Resource Service<br/><br/>Resource catalog"]
+            Booking["📅 Booking Service<br/><br/>Reservations"]
+            Marketplace["🛒 Marketplace<br/><br/>Products & Orders<br/>Saga Orchestrator"]
+            Payment["💰 Payment Service<br/><br/>Payment processing"]
+            Exam["📝 Exam Service<br/><br/>Exams & grading"]
+            Notification["📬 Notification Service<br/><br/>Email & SMS"]
+            IoT["🌡️ IoT Service<br/><br/>Sensor analytics"]
+            Tracking["🚌 Tracking Service<br/><br/>Shuttle GPS"]
+        end
+
+        MQ["🐰 Message Broker<br/><br/>RabbitMQ<br/>Async messaging & Saga"]
+        
+        Cache["⚡ Cache<br/><br/>Redis<br/>Sessions & rate limits"]
+        
+        subgraph Databases["Data Stores"]
+            DB["🗄️ PostgreSQL<br/><br/>Service databases<br/>(one per service)"]
+            TSDB["⏱️ TimescaleDB<br/><br/>IoT time-series data"]
+        end
+    end
+
+    ExtEmail["📧 Email Provider"]
+    ExtSMS["📱 SMS Provider"]
+    ExtPay["💳 Payment Provider"]
+    Sensors["🌡️ IoT Sensors"]
+
+    User -->|"HTTPS"| WebApp
+    WebApp -->|"HTTPS/REST"| Gateway
+    
+    Gateway -->|"REST queries"| Services
+    Gateway -->|"Commands"| MQ
+    Gateway -->|"Rate limit"| Cache
+    
+    Services <-->|"AMQP"| MQ
+    Services -->|"JDBC"| Databases
+    Auth -->|"Token cache"| Cache
+    Booking -->|"Availability cache"| Cache
+    
+    Notification -->|"SMTP"| ExtEmail
+    Notification -->|"API"| ExtSMS
+    Payment -->|"API"| ExtPay
+    Sensors -->|"MQTT/HTTP"| IoT
+
+    style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+    style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+    style Cache fill:#dc143c,stroke:#a00000,stroke-width:2px,color:#fff
+    style Marketplace fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style WebApp fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style User fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff
+    style ExtEmail fill:#999999,stroke:#666,color:#fff
+    style ExtSMS fill:#999999,stroke:#666,color:#fff
+    style ExtPay fill:#999999,stroke:#666,color:#fff
+    style Sensors fill:#999999,stroke:#666,color:#fff
+```
+## Level 1 C4 diagram
+```mermaid
+  ---
+config:
+  theme: dark
+---
+flowchart TB
+    subgraph boundary [University Management System Boundary]
+        System["📦 University Management System<br/><br/>Manages resources, bookings,<br/>marketplace, exams, and<br/>campus operations"]
+    end
+
+    Student["👨‍🎓 Student<br/><br/>Books resources, takes exams,<br/>purchases from marketplace,<br/>tracks shuttles"]
+    
+    Instructor["👩‍🏫 Instructor<br/><br/>Manages resources, creates exams,<br/>views analytics"]
+    
+    Admin["👤 Administrator<br/><br/>Manages users, system config,<br/>views reports"]
+
+    EmailSystem["📧 Email System<br/><br/>External email provider<br/>for notifications"]
+    
+    SMSGateway["📱 SMS Gateway<br/><br/>External SMS provider<br/>for alerts"]
+    
+    PaymentProvider["💳 Payment Provider<br/><br/>External payment processing"]
+
+    IoTSensors["🌡️ IoT Sensors<br/><br/>Campus environmental sensors<br/>and shuttle GPS devices"]
+
+    Student -->|"Uses"| System
+    Instructor -->|"Uses"| System
+    Admin -->|"Administers"| System
+    
+    System -->|"Sends emails via"| EmailSystem
+    System -->|"Sends SMS via"| SMSGateway
+    System -->|"Processes payments via"| PaymentProvider
+    IoTSensors -->|"Sends telemetry to"| System
+
+    style System fill:#1168bd,stroke:#0b4884,stroke-width:3px,color:#fff
+    style Student fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff
+    style Instructor fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff
+    style Admin fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff
+    style EmailSystem fill:#999999,stroke:#666666,stroke-width:2px,color:#fff
+    style SMSGateway fill:#999999,stroke:#666666,stroke-width:2px,color:#fff
+    style PaymentProvider fill:#999999,stroke:#666666,stroke-width:2px,color:#fff
+    style IoTSensors fill:#999999,stroke:#666666,stroke-width:2px,color:#fff
+```
 
 ---
 
@@ -143,3 +305,4 @@ flowchart TB
 | **Database per Service** | Isolated PostgreSQL instances | All services |
 | **Observer** | Event-driven notifications | Notification Service |
 | **Strategy** | Payment method selection | Payment Service |
+
