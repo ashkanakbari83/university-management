@@ -130,7 +130,7 @@ flowchart TB
     style APIGateway fill:#1168bd,stroke:#0b4884,stroke-width:3px,color:#ffffff
     style MessageBroker fill:#ff6b6b,stroke:#cc5555,stroke-width:3px,color:#ffffff
 ```
-## Level 3 C4 diagram
+## Level 3 C4 diagram (marketplace)
 ```mermaid
   ---
 config:
@@ -298,5 +298,6 @@ flowchart TB
 | **Database per Service** | Isolated PostgreSQL instances | All services |
 | **Observer** | Event-driven notifications | Notification Service |
 | **Strategy** | Payment method selection | Payment Service |
+
 
 
