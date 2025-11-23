@@ -157,45 +157,74 @@ config:
   theme: dark
 ---
 flowchart TB
+    %% Shared infrastructure
     Gateway["🚪 API Gateway"]
     MQ["🐰 RabbitMQ"]
-    DB[("🗄️ Marketplace DB")]
-    PaymentSvc["💰 Payment Service"]
-    BookingSvc["📅 Booking Service"]
 
+    %% Marketplace Service
     subgraph Marketplace["Marketplace Service"]
-        Controller["📡 REST Controller<br/><br/>Product & Order endpoints"]
-        
-        ProductMgmt["📦 Product Component<br/><br/>Catalog & inventory"]
-        
-        OrderMgmt["🛒 Order Component<br/><br/>Order lifecycle"]
-        
-        EventPub["📤 Event Publisher<br/><br/>Publishes domain events"]
-        
-        EventHandler["📥 Event Handler<br/><br/>Reacts to external events<br/>Saga choreography participant"]
-        
-        Repo["💾 Repository<br/><br/>JPA/Hibernate"]
+        M_Controller["📡 REST Controller<br/>Product & Order endpoints"]
+        ProductMgmt["📦 Product Component<br/>Catalog & inventory"]
+        OrderMgmt["🛒 Order Component<br/>Order lifecycle"]
+        M_EventPub["📤 Event Publisher<br/>Publishes domain events"]
+        M_EventHandler["📥 Event Handler<br/>Reacts to external events<br/>Saga choreography participant"]
+        M_Repo["💾 Repository<br/>JPA/Hibernate"]
+        M_DB[("🗄️ Marketplace DB")]
     end
 
-    Gateway -->|"REST"| Controller
-    Controller --> ProductMgmt
-    Controller --> OrderMgmt
-    OrderMgmt --> EventPub
-    EventPub -->|"OrderCreated"| MQ
-    MQ -->|"PaymentCompleted<br/>PaymentFailed"| EventHandler
-    EventHandler --> OrderMgmt
-    ProductMgmt --> Repo
-    OrderMgmt --> Repo
-    Repo -->|"JDBC"| DB
-    
+    Gateway -->|"REST"| M_Controller
+    M_Controller --> ProductMgmt
+    M_Controller --> OrderMgmt
+    OrderMgmt --> M_EventPub
+    M_EventPub -->|"OrderCreated"| MQ
+    MQ -->|"PaymentCompleted<br/>PaymentFailed"| M_EventHandler
+    M_EventHandler --> OrderMgmt
+    ProductMgmt --> M_Repo
+    OrderMgmt --> M_Repo
+    M_Repo -->|"JDBC"| M_DB
+
+    %% External Services
+    PaymentSvc["💰 Payment Service"]
+    BookingSvc["📅 Booking Service"]
     MQ <-->|"Events"| PaymentSvc
     MQ <-->|"Events"| BookingSvc
 
-    style EventHandler fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
-    style EventPub fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    %% Auth Service
+    subgraph AuthService["🔐 Auth Service"]
+        A_Controller["📡 AuthController<br/>/login, /register, /refresh"]
+        AuthManager["🧠 UserAuthManager<br/>Business Logic"]
+        PasswordHasher["🔑 PasswordHasher<br/>Hashing / Salt"]
+        JwtGenerator["🎫 JwtGenerator<br/>Create Access & Refresh Tokens"]
+        JwtValidator["🛡 JwtValidator<br/>Signature & Expiry Check"]
+        A_EventPub["📤 Event Publisher<br/>Publish 'UserRegistered'"]
+        A_EventHandler["📥 Event Handler<br/>Handle 'RoleUpdated'"]
+        A_Repo["💾 UserRepository<br/>JPA / Hibernate"]
+        A_DB[("🗄️ Auth DB")]
+    end
+
+    Gateway -->|"REST"| A_Controller
+    A_Controller --> AuthManager
+    AuthManager --> PasswordHasher
+    AuthManager --> A_Repo
+    AuthManager --> JwtGenerator
+    AuthManager --> JwtValidator
+    AuthManager --> A_EventPub
+
+    A_EventPub -->|"Events"| MQ
+    MQ --> A_EventHandler
+    A_Repo -->|"JDBC"| A_DB
+
+    %% Styles
+    style M_EventHandler fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style M_EventPub fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
     style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
     style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
-    style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style M_Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+
+    style A_Controller fill:#438dd5,stroke:#2e6295,color:#fff
+    style A_EventPub fill:#2a9d8f,stroke:#1a6d5f,color:#fff
+    style A_EventHandler fill:#2a9d8f,stroke:#1a6d5f,color:#fff
+
 ```
 
 ---
@@ -337,3 +366,4 @@ flowchart TB
     style APIGateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
     style MessageBroker fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
 ```
+
