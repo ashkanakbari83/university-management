@@ -146,8 +146,9 @@ flowchart TB
     style ExtPay fill:#999999,stroke:#666,color:#fff
     style Sensors fill:#999999,stroke:#666,color:#fff
 ```
+## Level 3: Component Diagram
 
-### Level 3: Component Diagram (Marketplace Service)
+### Marketplace Service
 
 Shows internal structure of the Marketplace service with Saga choreography.
 
@@ -197,8 +198,198 @@ flowchart TB
     style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
     style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
 ```
+##
+### Auth Service
+
+Shows internal structure of the Auth service, including user authentication, JWT management, and event handling.
+
+```mermaid
+---
+config:
+  theme: dark
+---
+flowchart TB
+    %% Shared infrastructure
+    Gateway["🚪 API Gateway"]
+    MQ["🐰 RabbitMQ"]
+    DB[("🗄️ Auth DB")]
+
+    %% Auth Service
+    subgraph AuthService["🔐 Auth Service"]
+        Controller["📡 AuthController<br/>/login, /register, /refresh"]
+        AuthManager["🧠 UserAuthManager<br/>Business Logic"]
+        PasswordHasher["🔑 PasswordHasher<br/>Hashing / Salt"]
+        JwtGenerator["🎫 JwtGenerator<br/>Create Access & Refresh Tokens"]
+        JwtValidator["🛡 JwtValidator<br/>Signature & Expiry Check"]
+        EventPub["📤 Event Publisher<br/>Publish 'UserRegistered'"]
+        EventHandler["📥 Event Handler<br/>Handle 'RoleUpdated'"]
+        Repo["💾 UserRepository<br/>JPA/Hibernate"]
+    end
+
+    %% Internal connections
+    Gateway -->|"REST"| Controller
+    Controller --> AuthManager
+    AuthManager --> PasswordHasher
+    AuthManager --> Repo
+    AuthManager --> JwtGenerator
+    AuthManager --> JwtValidator
+    AuthManager --> EventPub
+    EventPub -->|"Events"| MQ
+    MQ --> EventHandler
+    Repo -->|"JDBC"| DB
+
+    %% Styles
+    style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style EventPub fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style EventHandler fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+    style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+
+```
+##
+### User Service
+
+Shows internal structure of the User Service, which is completely separate from the Auth Service. It handles user profile management, Role-Based Access Control (RBAC), receives the UserRegistered event from Auth Service via RabbitMQ to create the initial profile, and publishes UserRoleChanged and UserProfileUpdated events.
+
+```mermaid
+---
+---
+config:
+  theme: dark
+---
+flowchart TB
+    %% Shared infrastructure
+    Gateway["API Gateway"]
+    MQ["RabbitMQ"]
+    DB[("User DB")]
+    %% User Service
+    subgraph UserService["User Service"]
+        Controller["REST Controller<br/>GET /me, PUT /profile<br/>GET /users/{id}, PATCH /role"]
+        UserManager["UserManager<br/>Business Logic & RBAC"]
+        ProfileService["ProfileService<br/>CRUD operations on profile"]
+        RoleEnforcer["RBAC Enforcer<br/>Role & permission checks"]
+        EventPub["Event Publisher<br/>Publish 'UserRoleChanged'<br/>Publish 'UserProfileUpdated'"]
+        EventHandler["Event Handler<br/>Handle 'UserRegistered' (from Auth Service)"]
+        Repo["UserProfileRepository<br/>JPA/Hibernate"]
+    end
+    %% Internal connections
+    Gateway -->|"REST + JWT"| Controller
+    Controller --> UserManager
+    UserManager --> ProfileService
+    UserManager --> RoleEnforcer
+    UserManager --> Repo
+    UserManager --> EventPub
+    EventPub -->|"UserRoleChanged etc."| MQ
+    MQ -->|"UserRegistered"| EventHandler
+    EventHandler --> UserManager
+    Repo -->|"JDBC"| DB
+    %% Styles — exactly like your Auth Service
+    style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style EventPub fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style EventHandler fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+    style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+
+```
+##
+### Resource Service
+
+Shows internal structure of the Resource Service — manages physical resources (rooms, labs, shuttles, equipment). Provides catalog and status. Publishes ResourceStatusChanged event when availability changes.
+
+```mermaid
+---
+---
+config:
+  theme: dark
+---
+flowchart TB
+    %% Shared infrastructure
+    Gateway["API Gateway"]
+    MQ["RabbitMQ"]
+    DB[("Resource DB")]
+
+    %% Resource Service - completely separate
+    subgraph ResourceService["Resource Service"]
+        Controller["REST Controller<br/>GET /resources<br/>GET /resources/{id}<br/>POST /resources (admin)"]
+        ResourceManager["ResourceManager<br/>CRUD & status logic"]
+        Availability["Availability Tracker<br/>Real-time status"]
+        EventPub["Event Publisher<br/>Publish 'ResourceStatusChanged'<br/>Publish 'ResourceAdded'"]
+        EventHandler["Event Handler<br/>Handle external updates"]
+        Repo["ResourceRepository<br/>JPA/Hibernate"]
+    end
+
+    %% Connections
+    Gateway -->|"REST + JWT"| Controller
+    Controller --> ResourceManager
+    ResourceManager --> Availability
+    ResourceManager --> Repo
+    ResourceManager --> EventPub
+    EventPub -->|"ResourceStatusChanged"| MQ
+    MQ -->|"External events"| EventHandler
+    EventHandler --> ResourceManager
+    Repo -->|"JDBC"| DB
+
+    %% Exact same style as your Auth Service
+    style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style EventPub fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style EventHandler fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+    style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+```
+##
+### Booking Service
+
+Shows internal structure of the Booking Service, which is completely separate from the Resource Service. It handles all reservation requests, prevents overbooking using optimistic locking (@Version), validates time slot overlaps, receives ResourceStatusChanged events from Resource Service via RabbitMQ, and publishes BookingConfirmed and BookingCancelled events.
+
+```mermaid
+---
+config:
+  theme: dark
+---
+flowchart TB
+    %% Shared infrastructure
+    Gateway["API Gateway"]
+    MQ["RabbitMQ"]
+    DB[("Booking DB")]
+
+    %% Booking Service – completely separate from Resource Service
+    subgraph BookingService["Booking Service"]
+        Controller["REST Controller<br/>POST /bookings<br/>GET /my-bookings<br/>DELETE /bookings/{id}"]
+        BookingManager["BookingManager<br/>Core reservation logic"]
+        ConflictChecker["Conflict Detector<br/>@Version + Optimistic Locking<br/>Prevents Overbooking"]
+        TimeValidator["Time Slot Validator<br/>Check overlapping slots"]
+        EventPub["Event Publisher<br/>Publish 'BookingConfirmed'<br/>Publish 'BookingCancelled'"]
+        EventHandler["Event Handler<br/>Handle 'ResourceStatusChanged'"]
+        Repo["BookingRepository<br/>JPA/Hibernate"]
+    end
+
+    %% Connections
+    Gateway -->|"REST + JWT"| Controller
+    Controller --> BookingManager
+    BookingManager --> ConflictChecker
+    BookingManager --> TimeValidator
+    BookingManager --> Repo
+    BookingManager --> EventPub
+    EventPub -->|"Events"| MQ
+    MQ --> EventHandler
+    EventHandler --> BookingManager
+    Repo -->|"JDBC"| DB
+
+    %% Overbooking prevention – REQUIRED BY PROJECT
+    style ConflictChecker fill:#e76f51,stroke:#c44536,stroke-width:4px,color:#fff
+
+    %% Exact same style as your Auth Service
+    style Controller fill:#438dd5,stroke:#2e6295,stroke-width:2px,color:#fff
+    style EventPub fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style EventHandler fill:#2a9d8f,stroke:#1a6d5f,stroke-width:2px,color:#fff
+    style Gateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+    style MQ fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+```
+
+
 
 ---
+
 
 ## Service Inventory
 
@@ -337,3 +528,4 @@ flowchart TB
     style APIGateway fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
     style MessageBroker fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
 ```
+
