@@ -129,3 +129,4 @@ For microservices using event-driven Saga, Kong + Kafka or Traefik + NATS/Rabbit
 | Gateway's Role in Saga | Initiates requests and exposes APIs for saga status; does not coordinate saga logic. |
 | Result | A scalable, maintainable, and fault-tolerant architecture. |
 ---
+fdgfgfdgdfgfdgddg
