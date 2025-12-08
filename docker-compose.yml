@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - microservices-network
@@ -20,13 +20,15 @@ services:
 
   # Auth Service
   auth-service:
-    build: ./auth-service
+    build: ./services/auth-service
     container_name: auth-service
+    ports:
+      - "8081:8081" #tmp for test
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/authdb
-      - DB_USERNAME=user
-      - DB_PASSWORD=pass
+      - DB_USERNAME=auth_user
+      - DB_PASSWORD=auth_pass
       - JWT_SECRET=your-jwt-secret-change-in-production
       - INTERNAL_API_SECRET=gateway-to-services-secret-123
     depends_on:

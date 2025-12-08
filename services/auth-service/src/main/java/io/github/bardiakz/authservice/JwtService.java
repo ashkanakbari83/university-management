@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
@@ -19,15 +20,15 @@ public class JwtService {
     private final SecretKey signingKey;
     private final Long expiration;
 
-    public JwtService() {
-        Dotenv dotenv = Dotenv.configure().load();
-        String secret = dotenv.get("JWT_SECRET");
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration:86400000}") Long expiration) {
 
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalArgumentException("JWT secret must be at least 256 bits");
         }
 
-        this.expiration = Long.parseLong(dotenv.get("JWT_EXPIRATION", "86400000"));
+        this.expiration = expiration;
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
