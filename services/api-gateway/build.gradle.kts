@@ -21,9 +21,35 @@ repositories {
 extra["springCloudVersion"] = "2025.1.0"
 
 dependencies {
-	implementation("org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Spring Cloud Gateway (Reactive)
+    implementation("org.springframework.cloud:spring-cloud-starter-gateway")
+    implementation("org.springframework.cloud:spring-cloud-gateway-core")
+
+    // Reactive Web (required for Gateway)
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // Redis for rate limiting and caching
+    implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
+
+    // JWT
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
+
+    // Resilience4j for circuit breaker
+    implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j")
+
+    // Actuator for monitoring
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    // Validation
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // Testing
+    testImplementation("io.projectreactor:reactor-test")
 }
 
 dependencyManagement {
