@@ -18,18 +18,51 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis
+  redis:
+    image: redis:8.4.0
+    container_name: redis-cache
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    networks:
+      - microservices-network
+      
   # Auth Service
   auth-service:
     build: ./services/auth-service
     container_name: auth-service
-    ports:
-      - "8081:8081" #tmp for test
+#    ports:
+#      - "8081:8081" #tmp for test
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/authdb
       - DB_USERNAME=auth_user
       - DB_PASSWORD=auth_pass
-      - JWT_SECRET=your-jwt-secret-change-in-production
+      - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_SECRET=gateway-to-services-secret-123
     depends_on:
       postgres:
