@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
-    private UserRepository userRepository; // Or use in-memory if no DB
+    private UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

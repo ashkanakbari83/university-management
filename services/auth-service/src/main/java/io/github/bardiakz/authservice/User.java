@@ -9,27 +9,34 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String username;
     private String password;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "role", nullable = false)
     private Role role;
 
-    // Getters/Setters...
+    // getters & setters
     public void setUsername(String username) { this.username = username; }
     public void setPassword(String password) { this.password = password; }
     public void setRole(Role role) { this.role = role; }
+    public Role getRole() { return role; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.toString()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override public String getUsername() { return username; }
     @Override public String getPassword() { return password; }
-    public Role getRole() { return role; }
 
+    //UserDetails methods
+    @Override public boolean isAccountNonExpired() { return true; }
 }
 
 

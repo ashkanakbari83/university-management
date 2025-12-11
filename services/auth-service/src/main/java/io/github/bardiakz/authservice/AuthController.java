@@ -80,9 +80,9 @@ public class AuthController {
                     .body(Map.of("error", "Role is required"));
         }
 
-        if (request.role() != Role.STUDENT && request.role() != Role.INSTRUCTOR) {
+        if (request.role() != Role.STUDENT && request.role() != Role.INSTRUCTOR && request.role() != Role.FACULTY) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Role must be either STUDENT or INSTRUCTOR"));
+                    .body(Map.of("error", "Invalid Role!"));
         }
 
         // Check if username already exists

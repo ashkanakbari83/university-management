@@ -1,6 +1,7 @@
 package io.github.bardiakz.api_gateway.filter;
 
 import io.github.bardiakz.api_gateway.security.JwtService;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -9,7 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
         this.jwtService = jwtService;
     }
 
+    @NotNull
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
@@ -33,7 +35,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 log.warn("Missing or invalid Authorization header for path: {}", request.getPath());
-                return onError(exchange, "Missing or invalid Authorization header", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Missing or invalid Authorization header");
             }
 
             String token = authHeader.substring(7);
@@ -42,7 +44,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 // Validate token
                 if (!jwtService.validateToken(token)) {
                     log.warn("Invalid or expired JWT token");
-                    return onError(exchange, "Invalid or expired token", HttpStatus.UNAUTHORIZED);
+                    return onError(exchange, "Invalid or expired token");
                 }
 
                 // Extract user info and add to headers
@@ -61,15 +63,14 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
             } catch (Exception e) {
                 log.error("JWT validation error: {}", e.getMessage());
-                return onError(exchange, "Token validation failed", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Token validation failed");
             }
         };
     }
 
-    private Mono<Void> onError(org.springframework.web.server.ServerWebExchange exchange,
-                               String message,
-                               HttpStatus status) {
-        exchange.getResponse().setStatusCode(status);
+    private Mono<Void> onError(ServerWebExchange exchange,
+                               String message) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().add("Content-Type", "application/json");
         String body = String.format("{\"error\": \"%s\"}", message);
         var buffer = exchange.getResponse().bufferFactory().wrap(body.getBytes());
