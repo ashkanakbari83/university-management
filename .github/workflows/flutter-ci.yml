@@ -63,12 +63,14 @@ jobs:
         working-directory: ./frontend/um_flutter
       - shell: powershell
         run: |
-          cd frontend/um_flutter/build/windows/x64/runner/Release
-          Compress-Archive -Path * -DestinationPath ../../../../../../um_flutter-windows.zip
+          $source = "frontend\um_flutter\build\windows\x64\runner\Release"
+          if (Test-Path $source) {
+            Compress-Archive -Path "$source\*" -DestinationPath "um_flutter-windows.zip" -Force
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: frontend/um_flutter/um_flutter-windows.zip
+          path: um_flutter-windows.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -76,7 +78,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get update -y
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.38.4'
